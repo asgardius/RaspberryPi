@@ -39,6 +39,14 @@ Lesser General Public License for more details.
 #include <string.h>
 #include <sys/sysinfo.h>
 #include "PCD8544.h"
+#include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
 // pin setup
 int _din = 1;
@@ -52,6 +60,14 @@ int contrast = 50;
   
 int main (void)
 {
+  //clock
+  // variables to store date and time components
+  int hours, minutes, seconds, day, month, year;
+  
+  //network
+  int fd;
+  struct ifreq ifr;
+  
   // print infos
   printf("Raspberry Pi PCD8544 sysinfo display\n");
   printf("========================================\n");
@@ -74,6 +90,34 @@ int main (void)
   
   for (;;)
   {
+	  char wrinfo[15];
+	  char wlinfo[15];
+	  
+	  fd = socket(AF_INET, SOCK_DGRAM, 0);
+	  
+	  /* I want to get an IPv4 IP address */
+	  ifr.ifr_addr.sa_family = AF_INET;
+	  
+	  /* I want IP address attached to "wlan0" */
+	  strncpy(ifr.ifr_name, "wlan0", IFNAMSIZ-1);
+	  
+	  ioctl(fd, SIOCGIFADDR, &ifr);
+	  close(fd);
+	  sprintf(wlinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+	  
+	  // time_t is arithmetic time type
+	  time_t now;
+	  
+	  // Obtain current time
+	  // time() returns the current time of the system as a time_t value
+	  time(&now);
+	  
+	  // localtime converts a time_t value to calendar time and 
+	  // returns a pointer to a tm structure with its members 
+	  // filled with the corresponding values
+	  struct tm *local = localtime(&now);
+	  
+	  
 	  // clear lcd
 	  LCDclear();
 	  
@@ -84,30 +128,44 @@ int main (void)
 		printf("sysinfo-Error\n");
 	  }
 	  
+	  
+	  // time info
+	  char timeInfo[10]; 
+	  unsigned long seconds = local->tm_sec;
+	  unsigned long minutes = local->tm_min;
+	  unsigned long hours = local->tm_hour;
+	  sprintf(timeInfo, "Time: %02d:%02d:%02d", hours, minutes, seconds);
+	  
 	  // uptime
 	  char uptimeInfo[15];
-	  unsigned long uptime = sys_info.uptime / 60;
-	  sprintf(uptimeInfo, "Uptime %ld min.", uptime);
+	  unsigned long uph = sys_info.uptime / 3600;
+	  unsigned long upm = (sys_info.uptime / 60) - (uph * 60);
+	  unsigned long ups = sys_info.uptime - (upm * 60) - (uph * 3600);
+	  sprintf(uptimeInfo, "Up: %02d:%02d:%02d", uph, upm, ups);
 	  
 	  // cpu info
 	  char cpuInfo[10]; 
-	  unsigned long avgCpuLoad = sys_info.loads[0] / 1000;
+	  unsigned long avgCpuLoad = sys_info.loads[0] / 4000;
 	  sprintf(cpuInfo, "CPU %ld%%", avgCpuLoad);
 	  
 	  // ram info
 	  char ramInfo[10]; 
-	  unsigned long totalRam = sys_info.freeram / 1024 / 1024;
+	  unsigned long totalRam = (sys_info.totalram - sys_info.freeram - sys_info.bufferram - sys_info.sharedram) / 1024 / 1024;
 	  sprintf(ramInfo, "RAM %ld MB", totalRam);
 	  
+	  	  
 	  // build screen
-	  LCDdrawstring(0, 0, "Raspberry Pi:");
-	  LCDdrawline(0, 10, 83, 10, BLACK);
-	  LCDdrawstring(0, 12, uptimeInfo);
-	  LCDdrawstring(0, 20, cpuInfo);
-	  LCDdrawstring(0, 28, ramInfo);
+	  LCDdrawstring(0, 0, timeInfo);
+	  //LCDdrawstring(0, 0, "Raspberry Pi:");
+	  //LCDdrawline(0, 10, 83, 10, BLACK);
+	  LCDdrawstring(0, 8, uptimeInfo);
+	  LCDdrawstring(0, 16, cpuInfo);
+	  LCDdrawstring(0, 24, ramInfo);
+	  LCDdrawstring(0, 32, wlinfo);
+	  //LCDdrawstring(0, 40, "255.255.255.255");
 	  LCDdisplay();
 	  
-	  delay(10000);
+	  delay(1000);
   }
   
     //for (;;){
