@@ -65,8 +65,10 @@ int main (void)
   int hours, minutes, seconds, day, month, year;
   
   //network
-  int fd;
-  struct ifreq ifr;
+  int fdl;
+  int fdr;
+  struct ifreq ifrl;
+  struct ifreq ifrr;
   
   // print infos
   printf("Raspberry Pi PCD8544 sysinfo display\n");
@@ -93,17 +95,29 @@ int main (void)
 	  char wrinfo[15];
 	  char wlinfo[15];
 	  
-	  fd = socket(AF_INET, SOCK_DGRAM, 0);
+	  fdl = socket(AF_INET, SOCK_DGRAM, 0);
 	  
 	  /* I want to get an IPv4 IP address */
-	  ifr.ifr_addr.sa_family = AF_INET;
+	  ifrl.ifr_addr.sa_family = AF_INET;
 	  
 	  /* I want IP address attached to "wlan0" */
-	  strncpy(ifr.ifr_name, "wlan0", IFNAMSIZ-1);
+	  strncpy(ifrl.ifr_name, "wlan0", IFNAMSIZ-1);
 	  
-	  ioctl(fd, SIOCGIFADDR, &ifr);
-	  close(fd);
-	  sprintf(wlinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+	  ioctl(fdl, SIOCGIFADDR, &ifrl);
+	  close(fdl);
+	  sprintf(wlinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifrl.ifr_addr)->sin_addr));
+	  
+	  fdr = socket(AF_INET, SOCK_DGRAM, 0);
+	  
+	  /* I want to get an IPv4 IP address */
+	  ifrr.ifr_addr.sa_family = AF_INET;
+	  
+	  /* I want IP address attached to "wlan0" */
+	  strncpy(ifrr.ifr_name, "eth0", IFNAMSIZ-1);
+	  
+	  ioctl(fdr, SIOCGIFADDR, &ifrr);
+	  close(fdr);
+	  sprintf(wrinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifrr.ifr_addr)->sin_addr));
 	  
 	  // time_t is arithmetic time type
 	  time_t now;
@@ -134,14 +148,14 @@ int main (void)
 	  unsigned long seconds = local->tm_sec;
 	  unsigned long minutes = local->tm_min;
 	  unsigned long hours = local->tm_hour;
-	  sprintf(timeInfo, "Time: %02d:%02d:%02d", hours, minutes, seconds);
+	  sprintf(timeInfo, "      %02d:%02d:%02d", hours, minutes, seconds);
 	  
 	  // uptime
 	  char uptimeInfo[15];
 	  unsigned long uph = sys_info.uptime / 3600;
 	  unsigned long upm = (sys_info.uptime / 60) - (uph * 60);
 	  unsigned long ups = sys_info.uptime - (upm * 60) - (uph * 3600);
-	  sprintf(uptimeInfo, "Up: %02d:%02d:%02d", uph, upm, ups);
+	  sprintf(uptimeInfo, "Up    %02d:%02d:%02d", uph, upm, ups);
 	  
 	  // cpu info
 	  char cpuInfo[10]; 
@@ -162,7 +176,7 @@ int main (void)
 	  LCDdrawstring(0, 16, cpuInfo);
 	  LCDdrawstring(0, 24, ramInfo);
 	  LCDdrawstring(0, 32, wlinfo);
-	  //LCDdrawstring(0, 40, "255.255.255.255");
+	  LCDdrawstring(0, 40, wrinfo);
 	  LCDdisplay();
 	  
 	  delay(1000);
