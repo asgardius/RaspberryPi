@@ -1,8 +1,8 @@
 Raspberry Pi
 ============
-In this repository you will find some miscellaneous Raspberry PI stuff by _André Wussow_.
+In this repository you will find some miscellaneous Raspberry PI stuff by Page Asgardius (Forked from AndrÃ© Wussow's repository).
 
-In most cases you will find more informations at http://www.binerry.de.
+You can find original repository at https://github.com/binerry/RaspberryPi.
 
 License
 -------
