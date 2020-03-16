@@ -104,8 +104,14 @@ int main (void)
 	  strncpy(ifrl.ifr_name, "wlan0", IFNAMSIZ-1);
 	  
 	  ioctl(fdl, SIOCGIFADDR, &ifrl);
+	  /* grab flags associated with this interface */
+	  ioctl(fdl, SIOCGIFFLAGS, &ifrl);
+	  if (ifrl.ifr_flags & IFF_RUNNING) {
+	    sprintf(wlinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifrl.ifr_addr)->sin_addr));
+	    } else {
+	      sprintf(wlinfo, "offline");
+	      }
 	  close(fdl);
-	  sprintf(wlinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifrl.ifr_addr)->sin_addr));
 	  
 	  fdr = socket(AF_INET, SOCK_DGRAM, 0);
 	  
@@ -116,8 +122,14 @@ int main (void)
 	  strncpy(ifrr.ifr_name, "eth0", IFNAMSIZ-1);
 	  
 	  ioctl(fdr, SIOCGIFADDR, &ifrr);
+	  /* grab flags associated with this interface */
+	  ioctl(fdr, SIOCGIFFLAGS, &ifrr);
+	  if (ifrr.ifr_flags & IFF_RUNNING) {
+	    sprintf(wrinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifrr.ifr_addr)->sin_addr));
+	    } else {
+	      sprintf(wrinfo, "offline");
+	      }
 	  close(fdr);
-	  sprintf(wrinfo, "%s", inet_ntoa(((struct sockaddr_in *)&ifrr.ifr_addr)->sin_addr));
 	  
 	  // time_t is arithmetic time type
 	  time_t now;
