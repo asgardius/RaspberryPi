@@ -92,6 +92,22 @@ int main (void)
   
   for (;;)
   {
+	  
+	  // clear lcd
+	  LCDclear();
+	  
+	  // temp
+	  char tempInfo[10]; 
+          FILE *temperatureFile;
+          double T;
+          temperatureFile = fopen ("/sys/class/thermal/thermal_zone0/temp", "r");
+          if (temperatureFile == NULL)
+            ; //print some message
+          fscanf (temperatureFile, "%lf", &T);
+          T /= 1000;
+	  sprintf(tempInfo, "Temp %6.3fC", T);
+          fclose (temperatureFile);
+	  
 	  char wrinfo[15];
 	  char wlinfo[15];
 	  
@@ -132,20 +148,16 @@ int main (void)
 	  close(fdr);
 	  
 	  // time_t is arithmetic time type
-	  time_t now;
+	  //time_t now;
 	  
 	  // Obtain current time
 	  // time() returns the current time of the system as a time_t value
-	  time(&now);
+	  //time(&now);
 	  
 	  // localtime converts a time_t value to calendar time and 
 	  // returns a pointer to a tm structure with its members 
 	  // filled with the corresponding values
-	  struct tm *local = localtime(&now);
-	  
-	  
-	  // clear lcd
-	  LCDclear();
+	  //struct tm *local = localtime(&now);
 	  
 	  // get system usage / info
 	  struct sysinfo sys_info;
@@ -156,11 +168,11 @@ int main (void)
 	  
 	  
 	  // time info
-	  char timeInfo[10]; 
-	  unsigned long seconds = local->tm_sec;
-	  unsigned long minutes = local->tm_min;
-	  unsigned long hours = local->tm_hour;
-	  sprintf(timeInfo, "      %02d:%02d:%02d", hours, minutes, seconds);
+	  //char timeInfo[10]; 
+	  //unsigned long seconds = local->tm_sec;
+	  //unsigned long minutes = local->tm_min;
+	  //unsigned long hours = local->tm_hour;
+	  //sprintf(timeInfo, "      %02d:%02d:%02d", hours, minutes, seconds);
 	  
 	  // uptime
 	  char uptimeInfo[15];
@@ -181,7 +193,7 @@ int main (void)
 	  
 	  	  
 	  // build screen
-	  LCDdrawstring(0, 0, timeInfo);
+	  LCDdrawstring(0, 0, tempInfo);
 	  //LCDdrawstring(0, 0, "Raspberry Pi:");
 	  //LCDdrawline(0, 10, 83, 10, BLACK);
 	  LCDdrawstring(0, 8, uptimeInfo);
